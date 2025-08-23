@@ -1,0 +1,23 @@
+[package]
+name = "rendition"
+description = "Rendition game client."
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies.bevy]
+version = "0.16.1"
+
+[workspace.dependencies]
+bevy_enhanced_input = "0.17.0"
+avian3d = { version = "0.3.1", features = ["enhanced-determinism", "bevy_diagnostic"] }
+
+
+[dependencies]
+killcam-app = { package = "rendition-killcam-app", path = "crates/killcam-app" }
+net-app = { package = "rendition-net-app", path = "crates/net-app" }
+server-app = { package = "rendition-server-app", path = "crates/server-app" } # Included in client for P2P games
+
+bevy.workspace = true

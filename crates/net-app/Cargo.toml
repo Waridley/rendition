@@ -1,0 +1,8 @@
+[package]
+name = "rendition-net-app"
+description = "Rendition network-syncing app. Sends client input to server and syncs server state to clients."
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy.workspace = true

@@ -1,0 +1,8 @@
+[package]
+name = "rendition-killcam-app"
+description = "Manages the killcam world for Rendition. Basically a rolling snapshot of the client world."
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy.workspace = true
