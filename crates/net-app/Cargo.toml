@@ -3,6 +3,10 @@ name = "rendition-net-app"
 description = "Rendition network-syncing app. Sends client input to server and syncs server state to clients."
 version = "0.1.0"
 edition = "2024"
+license = "EUPL-1.2"
+repository = "https://github.com/Waridley/rendition"
+homepage = "https://github.com/Waridley/rendition"
+authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
 bevy.workspace = true

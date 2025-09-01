@@ -3,6 +3,10 @@ name = "rendition-killcam-app"
 description = "Manages the killcam world for Rendition. Basically a rolling snapshot of the client world."
 version = "0.1.0"
 edition = "2024"
+license = "EUPL-1.2"
+repository = "https://github.com/Waridley/rendition"
+homepage = "https://github.com/Waridley/rendition"
+authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
 bevy.workspace = true
