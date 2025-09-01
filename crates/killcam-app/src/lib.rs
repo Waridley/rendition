@@ -17,11 +17,10 @@ pub struct KillcamPlugin;
 impl Plugin for KillcamPlugin {
 	fn build(&self, app: &mut App) {
 		let mut kc_app = SubApp::new();
-		
+
 		kc_app.add_systems(Update, hello_world);
-		
-		app
-			.insert_sub_app(KillcamApp, kc_app);
+
+		app.insert_sub_app(KillcamApp, kc_app);
 	}
 }
 

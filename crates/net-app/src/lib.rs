@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::app::AppLabel;
+use bevy::prelude::*;
 
 /// Label for the network-syncing SubApp.
 #[derive(AppLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
@@ -16,11 +16,10 @@ pub struct NetPlugin;
 impl Plugin for NetPlugin {
 	fn build(&self, app: &mut App) {
 		let mut net_app = SubApp::new();
-		
+
 		net_app.add_systems(Update, hello_world);
-		
-		app
-			.insert_sub_app(NetApp, net_app);
+
+		app.insert_sub_app(NetApp, net_app);
 	}
 }
 

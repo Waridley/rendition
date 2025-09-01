@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use bevy::app::AppLabel;
 use bevy::ecs::schedule::ScheduleLabel;
+use bevy::prelude::*;
 use sim::{SimPlugin, SimSchedule};
 
 /// Label for the server SubApp.
@@ -19,16 +19,15 @@ pub struct ServerPlugin;
 impl Plugin for ServerPlugin {
 	fn build(&self, app: &mut App) {
 		let mut server_app = SubApp::new();
-		
+
 		server_app
 			.add_plugins(SimPlugin)
 			.add_schedule(Schedule::new(ServerSchedule))
 			.init_resource::<ServerState>()
 			.add_systems(ServerSchedule, ServerSchedule::run.run_if(server_running))
 			.add_systems(Update, hello_world);
-		
-		app
-			.insert_sub_app(ServerApp, server_app);
+
+		app.insert_sub_app(ServerApp, server_app);
 	}
 }
 

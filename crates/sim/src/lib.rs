@@ -1,7 +1,7 @@
-use std::time::Duration;
+use avian3d::PhysicsPlugins;
 use bevy::ecs::schedule::{ExecutorKind, ScheduleLabel};
 use bevy::prelude::*;
-use avian3d::PhysicsPlugins;
+use std::time::Duration;
 
 pub use avian3d as phys;
 use avian3d::prelude::{Gravity, Physics, PhysicsTime};
@@ -9,8 +9,8 @@ use bevy::log::Level;
 use bevy::log::tracing::span;
 
 pub mod prelude {
-	pub use avian3d::prelude::*;
 	pub use super::SimPlugin;
+	pub use avian3d::prelude::*;
 }
 
 /// Schedule that runs the game simulation.
@@ -37,8 +37,7 @@ impl SimSchedule {
 			time.advance_by(dt);
 			dt
 		});
-		world.resource_mut::<Time<Physics>>()
-			.advance_by(dt);
+		world.resource_mut::<Time<Physics>>().advance_by(dt);
 		world.run_schedule(SimPhysicsSchedule);
 		*world.resource_mut::<Time>() = old_time;
 	}
@@ -62,8 +61,7 @@ impl Plugin for SimPlugin {
 		sim_schedule.set_executor_kind(ExecutorKind::SingleThreaded);
 		let mut phys_t = Time::<Physics>::default();
 		phys_t.pause();
-		app
-			.add_schedule(Schedule::new(SimSchedule))
+		app.add_schedule(Schedule::new(SimSchedule))
 			.add_systems(SimSchedule, SimSchedule::run_sub_schedules)
 			.add_plugins(PhysicsPlugins::new(SimPhysicsSchedule))
 			.insert_resource(Gravity(Vec3::NEG_Z * 9.81))
