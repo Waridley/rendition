@@ -1,5 +1,5 @@
-use crate::client::ClientId;
-use crate::players::PlayerId;
+use sim::ClientId;
+use sim::players::PlayerId;
 use bevy::prelude::*;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 

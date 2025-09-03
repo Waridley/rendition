@@ -31,4 +31,22 @@ impl Plugin for KillcamPlugin {
 
 		app.insert_sub_app(KillcamApp, kc_app);
 	}
+	
+	fn cleanup(&self, app: &mut App) {
+		info!("inserting KillcamWorld");
+		let killcam_world = std::mem::take(app.sub_app_mut(KillcamApp).world_mut());
+		app.insert_resource(KillcamWorld(killcam_world));
+	}
+}
+
+/// Resource that holds the killcam world, taken from the `KillcamApp` sub-app on
+/// `KillcamPlugin::cleanup`. Since the killcam simulation does not run automatically, but instead
+/// needs to be run by the main app, it is taken from the sub-app and stored in the main app's world.
+#[derive(Resource, Deref, DerefMut)]
+pub struct KillcamWorld(pub World);
+
+/// Run condition that returns true when the killcam is active.
+pub fn killcam_active() -> bool {
+	// TODO: implement activating/deactivating killcam
+	false
 }

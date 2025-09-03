@@ -1,5 +1,3 @@
-use crate::players::PlayerId;
-use crate::spectators::SpectatorId;
 use bevy::ecs::event::EventRegistry;
 use bevy::ecs::schedule::{ExecutorKind, ScheduleLabel};
 use bevy::{app::AppLabel, prelude::*};
@@ -14,29 +12,40 @@ pub struct ClientPlugin;
 impl Plugin for ClientPlugin {
 	fn build(&self, app: &mut App) {
 		let mut client_app = SubApp::new();
-
+		
 		// AppTypeRegistry is initialized in `App::default`. We want to share it with sub-apps.
 		let reg = app.world().resource::<AppTypeRegistry>().clone();
 		client_app.insert_resource(reg);
 		// Sub-apps have their own events. Shared events must be manually synchronized.
 		client_app.init_resource::<EventRegistry>();
-
+		
 		let mut sched = Schedule::new(ClientSchedule);
 		// ClientSchedule runs sub-schedules sequentially
 		sched.set_executor_kind(ExecutorKind::SingleThreaded);
-
+		
 		client_app
 			.add_plugins((MinimalPlugins, SimPlugin))
-			.register_type::<ClientId>()
 			.add_schedule(sched)
 			// sub-schedules run in parallel (default for `Schedule::new`)
 			.add_schedule(Schedule::new(ClientPreSim))
 			.add_schedule(Schedule::new(ClientPostSim))
 			.add_systems(ClientSchedule, ClientSchedule::run);
-
+		
 		app.insert_sub_app(ClientApp, client_app);
 	}
+	
+	fn cleanup(&self, app: &mut App) {
+		info!("inserting ClientWorld");
+		let client_world = std::mem::take(app.sub_app_mut(ClientApp).world_mut());
+		app.insert_resource(ClientWorld(client_world));
+	}
 }
+
+/// Resource that holds the client world, taken from the `ClientApp` sub-app on
+/// `ClientPlugin::cleanup`. Since the client simulation does not run automatically, but instead
+/// needs to be run by the main app, it is taken from the sub-app and stored in the main app's world.
+#[derive(Resource, Deref, DerefMut)]
+pub struct ClientWorld(pub World);
 
 /// Label for the client SubApp.
 ///
@@ -49,13 +58,6 @@ impl Plugin for ClientPlugin {
 #[derive(AppLabel, Default, Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ClientApp;
 
-/// Unique ID for each client in a match. May be a player or spectator.
-#[derive(Component, Copy, Clone, Debug, PartialEq, Eq, Hash, Reflect, PartialOrd, Ord)]
-pub enum ClientId {
-	Player(PlayerId),
-	Spectator(SpectatorId),
-}
-
 /// Schedule for the client app. Only runs on clients.
 ///
 /// Runs [`ClientPreSim`], [`SimMain`], then [`ClientPostSim`].
@@ -66,7 +68,7 @@ impl ClientSchedule {
 	pub fn run(world: &mut World) {
 		let span = trace_span!("ClientSchedule::run");
 		let _enter = span.enter();
-
+		
 		{
 			let pre_sim = trace_span!("ClientPreSim");
 			let _enter = pre_sim.enter();

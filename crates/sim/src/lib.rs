@@ -5,6 +5,11 @@ use std::time::Duration;
 
 pub use avian3d as phys;
 use avian3d::prelude::{Gravity, Physics, PhysicsTime};
+use crate::players::PlayerId;
+use crate::spectators::SpectatorId;
+
+pub mod players;
+pub mod spectators;
 
 pub mod prelude {
 	pub use super::SimPlugin;
@@ -139,6 +144,7 @@ impl Plugin for SimPlugin {
 			.add_schedule(Schedule::new(SimLast))
 			.add_systems(SimMain, SimMain::run)
 			.add_plugins(PhysicsPlugins::new(SimPhysics))
+			.register_type::<ClientId>()
 			.insert_resource(Gravity(Vec3::NEG_Z * 9.81))
 			.insert_resource(Time::<Sim>::default())
 			.insert_resource(phys_t);
@@ -146,6 +152,8 @@ impl Plugin for SimPlugin {
 }
 
 /// The clock representing simulation time. Is set as the default `Time` during the simulation schedule.
+#[derive(Debug, Reflect, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[reflect(Debug, PartialEq, Hash, Default)]
 pub struct Sim {
 	/// The fixed timestep to advance the simulation by.
 	dt: Duration,
@@ -157,4 +165,11 @@ impl Default for Sim {
 			dt: Duration::from_secs_f64(1.0 / 64.0),
 		}
 	}
+}
+
+/// Unique ID for each client in a match. May be a player or spectator.
+#[derive(Component, Copy, Clone, Debug, PartialEq, Eq, Hash, Reflect, PartialOrd, Ord)]
+pub enum ClientId {
+	Player(PlayerId),
+	Spectator(SpectatorId),
 }

@@ -3833,8 +3833,17 @@ name = "rendition"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "rendition-client-app",
  "rendition-killcam-app",
  "rendition-server-app",
+ "rendition-sim",
+]
+
+[[package]]
+name = "rendition-client-app"
+version = "0.1.0"
+dependencies = [
+ "bevy",
  "rendition-sim",
 ]
 

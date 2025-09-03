@@ -41,7 +41,18 @@ impl Plugin for ServerPlugin {
 
 		app.insert_sub_app(ServerApp, srv_app);
 	}
+	
+	fn cleanup(&self, app: &mut App) {
+		let server_world = std::mem::take(app.sub_app_mut(ServerApp).world_mut());
+		app.insert_resource(ServerWorld(server_world));
+	}
 }
+
+/// Resource that holds the server world, taken from the `ServerApp` sub-app on
+/// `ServerPlugin::cleanup`. Since the server simulation does not run automatically, but instead
+/// needs to be run by the main app, it is taken from the sub-app and stored in the main app's world.
+#[derive(Resource, Deref, DerefMut)]
+pub struct ServerWorld(pub World);
 
 /// Schedule for the server app. Only runs on the host during P2P games or in dedicated servers.
 #[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]

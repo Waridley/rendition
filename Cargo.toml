@@ -1,12 +1,16 @@
 [package]
 name = "rendition"
-description = "Rendition game client."
+description = "Rendition game runner."
 version = "0.1.0"
 edition = "2024"
 license = "EUPL-1.2"
 repository = "https://github.com/Waridley/rendition"
 homepage = "https://github.com/Waridley/rendition"
 authors = ["Waridley <Waridley64@gmail.com>"]
+
+[features]
+default = ["gui"]
+gui = ["client-app", "killcam-app"] # Enabled when not running as a headless server
 
 [workspace]
 members = ["crates/*"]
@@ -20,7 +24,8 @@ avian3d = { version = "0.3.1", features = ["enhanced-determinism", "bevy_diagnos
 
 
 [dependencies]
-killcam-app = { package = "rendition-killcam-app", path = "crates/killcam-app" }
+client-app = { package = "rendition-client-app", path = "crates/client-app", optional = true }
+killcam-app = { package = "rendition-killcam-app", path = "crates/killcam-app", optional = true }
 server-app = { package = "rendition-server-app", path = "crates/server-app" } # Included in client for P2P games
 sim = { package = "rendition-sim", path = "crates/sim" }
 

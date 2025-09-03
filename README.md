@@ -59,7 +59,7 @@ the game.
 
 #### Client
 
-The [client app](src/client.rs) is responsible for reading player input, predicting
+The [client app](crates/client-app) is responsible for reading player input, predicting
 the simulation, sending inputs to the server, receiving confirmed state from the
 server, rolling back to that state, and re-running the simulation multiple times
 to re-predict the current state.
