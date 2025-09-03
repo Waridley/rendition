@@ -1,8 +1,8 @@
 use bevy::app::AppLabel;
 use bevy::ecs::event::EventRegistry;
-use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::schedule::{ExecutorKind, ScheduleLabel};
 use bevy::prelude::*;
-use sim::{SimPlugin, SimSchedule};
+use sim::{SimMain, SimPlugin};
 
 /// Label for the server SubApp.
 #[derive(AppLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
@@ -20,50 +20,60 @@ pub struct ServerPlugin;
 impl Plugin for ServerPlugin {
 	fn build(&self, app: &mut App) {
 		let mut srv_app = SubApp::new();
-		
+
 		// AppTypeRegistry is initialized in `App::default`. We want to share it with sub-apps.
 		let reg = app.world().resource::<AppTypeRegistry>().clone();
 		srv_app.insert_resource(reg);
 		// Sub-apps have their own events. Shared events must be manually synchronized.
 		srv_app.init_resource::<EventRegistry>();
-		
+
+		let mut sched = Schedule::new(ServerSchedule);
+		// ServerSchedule runs sub-schedules sequentially
+		sched.set_executor_kind(ExecutorKind::SingleThreaded);
+
 		srv_app
-			.add_plugins((
-				MinimalPlugins,
-				SimPlugin,
-			))
-			.add_schedule(Schedule::new(ServerSchedule))
-			.init_resource::<ServerState>()
-			.add_systems(ServerSchedule, ServerSchedule::run.run_if(server_running))
-			.add_systems(Update, hello_world);
+			.add_plugins((MinimalPlugins, SimPlugin))
+			.add_schedule(sched)
+			// sub-schedules run in parallel (default for `Schedule::new`)
+			.add_schedule(Schedule::new(ServerPreSim))
+			.add_schedule(Schedule::new(ServerPostSim))
+			.add_systems(ServerSchedule, ServerSchedule::run);
 
 		app.insert_sub_app(ServerApp, srv_app);
 	}
 }
 
-/// Schedule for the server app. Only runs during P2P games or in dedicated servers.
+/// Schedule for the server app. Only runs on the host during P2P games or in dedicated servers.
 #[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct ServerSchedule;
 
 impl ServerSchedule {
 	pub fn run(world: &mut World) {
-		world.run_schedule(SimSchedule);
+		let span = trace_span!("ServerSchedule::run");
+		let _enter = span.enter();
+
+		{
+			let pre_sim = trace_span!("ServerPreSim");
+			let _enter = pre_sim.enter();
+			world.run_schedule(ServerPreSim);
+		}
+		{
+			let sim = trace_span!("SimMain");
+			let _enter = sim.enter();
+			world.run_schedule(SimMain);
+		}
+		{
+			let post_sim = trace_span!("ServerPostSim");
+			let _enter = post_sim.enter();
+			world.run_schedule(ServerPostSim);
+		}
 	}
 }
 
-/// Run condition for the server schedule.
-fn server_running(state: Res<ServerState>) -> bool {
-	state.running
-}
+/// Schedule that runs before the simulation schedule on the server.
+#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct ServerPreSim;
 
-#[derive(Resource, Default, Debug, Reflect)]
-#[reflect(Resource)]
-pub struct ServerState {
-	/// Whether the server is currently running. Defaults to false. Should be set when a game starts
-	/// *and* the app is running on either a dedicated server or the host client in a P2P game.
-	pub running: bool,
-}
-
-fn hello_world() {
-	info!("Hello World!");
-}
+/// Schedule that runs after the simulation schedule on the server.
+#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct ServerPostSim;

@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-mod client;
-mod extract;
-mod net;
-mod players;
-mod spectators;
+pub mod client;
+pub mod extract;
+pub mod net;
+pub mod players;
+pub mod spectators;
 
 fn main() {
 	App::new()

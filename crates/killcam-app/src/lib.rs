@@ -27,17 +27,8 @@ impl Plugin for KillcamPlugin {
 		// Sub-apps have their own events. Shared events must be manually synchronized.
 		kc_app.init_resource::<EventRegistry>();
 
-		kc_app
-			.add_plugins((
-				MinimalPlugins,
-				SimPlugin,
-			))
-			.add_systems(Update, hello_world);
+		kc_app.add_plugins((MinimalPlugins, SimPlugin));
 
 		app.insert_sub_app(KillcamApp, kc_app);
 	}
-}
-
-fn hello_world() {
-	info!("Hello World!");
 }

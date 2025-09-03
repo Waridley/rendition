@@ -7,7 +7,7 @@ use bevy::log::{Level, LogPlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::MeshPlugin;
 use bevy::scene::ScenePlugin;
-use rendition_sim::SimSchedule;
+use rendition_sim::SimMain;
 use rendition_sim::prelude::*;
 
 pub fn create_test_app() -> App {
@@ -31,8 +31,7 @@ pub fn create_test_app() -> App {
 }
 
 fn run_sim_schedule(world: &mut World) {
-	span!(Level::TRACE, "run_sim_schedule");
-	world.run_schedule(SimSchedule);
+	world.run_schedule(SimMain);
 }
 
 /// Sanity check that a very simple simulation runs deterministically in two worlds on the same
