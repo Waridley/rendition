@@ -76,6 +76,7 @@ pub struct SimPhysicsSchedule;
 
 /// The clock representing simulation time.
 pub struct Sim {
+	/// The fixed timestep to advance the simulation by.
 	dt: Duration,
 }
 

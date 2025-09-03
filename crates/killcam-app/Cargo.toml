@@ -9,4 +9,5 @@ homepage = "https://github.com/Waridley/rendition"
 authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
+sim = { package = "rendition-sim", path = "../sim" }
 bevy.workspace = true

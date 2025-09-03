@@ -3834,8 +3834,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "rendition-killcam-app",
- "rendition-net-app",
  "rendition-server-app",
+ "rendition-sim",
 ]
 
 [[package]]
@@ -3843,13 +3843,7 @@ name = "rendition-killcam-app"
 version = "0.1.0"
 dependencies = [
  "bevy",
-]
-
-[[package]]
-name = "rendition-net-app"
-version = "0.1.0"
-dependencies = [
- "bevy",
+ "rendition-sim",
 ]
 
 [[package]]

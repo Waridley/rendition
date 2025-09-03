@@ -21,7 +21,7 @@ avian3d = { version = "0.3.1", features = ["enhanced-determinism", "bevy_diagnos
 
 [dependencies]
 killcam-app = { package = "rendition-killcam-app", path = "crates/killcam-app" }
-net-app = { package = "rendition-net-app", path = "crates/net-app" }
 server-app = { package = "rendition-server-app", path = "crates/server-app" } # Included in client for P2P games
+sim = { package = "rendition-sim", path = "crates/sim" }
 
 bevy.workspace = true
