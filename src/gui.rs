@@ -31,21 +31,21 @@ pub fn run_killcam(mut killcam_world: ResMut<KillcamWorld>) {
 pub fn extract_for_visuals(world: &mut World, mut tmp_world: Local<World>) -> Result<()> {
 	let killcam_active = world.run_system_cached(killcam_app::killcam_active)?;
 	
-	fn swap_active_tmp(killcam_active: bool, world: &mut World, tmp: &mut World) {
+	let swap_active_tmp = |world: &mut World, tmp: &mut World| {
 		if killcam_active {
 			std::mem::swap(&mut **world.resource_mut::<KillcamWorld>(), tmp);
 		} else {
 			std::mem::swap(&mut **world.resource_mut::<ClientWorld>(), tmp);
 		};
-	}
+	};
 	
-	swap_active_tmp(killcam_active, world, &mut tmp_world);
+	swap_active_tmp(world, &mut tmp_world);
 	
 	let sim_time = tmp_world.resource::<Time<Sim>>();
 	info!(?sim_time);
 	
 	
-	swap_active_tmp(killcam_active, world, &mut tmp_world);
+	swap_active_tmp(world, &mut tmp_world);
 	
 	Ok(())
 }

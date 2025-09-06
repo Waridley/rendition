@@ -20,6 +20,7 @@ version = "0.16.1"
 
 [workspace.dependencies]
 bevy_enhanced_input = "0.17.0"
+bird_barrier = "0.1.0"
 avian3d = { version = "0.3.1", features = ["enhanced-determinism", "bevy_diagnostic"] }
 
 
@@ -30,3 +31,4 @@ server-app = { package = "rendition-server-app", path = "crates/server-app" } # 
 sim = { package = "rendition-sim", path = "crates/sim" }
 
 bevy.workspace = true
+bird_barrier.workspace = true

@@ -15,6 +15,7 @@ fn main() {
 			// Included even in client builds for P2P games
 			server_app::ServerPlugin,
 		))
+		.add_systems(OnEnter(MainState::Splash), show_splash)
 		.run();
 }
 
@@ -25,4 +26,9 @@ pub enum MainState {
 	MainMenu,
 	Loading,
 	InGame,
+}
+
+fn show_splash(mut next_state: ResMut<NextState<MainState>>) {
+	info!("Todo: splash screen; going straight to MainMenu for now");
+	next_state.set(MainState::MainMenu);
 }

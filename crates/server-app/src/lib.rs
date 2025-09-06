@@ -30,14 +30,15 @@ impl Plugin for ServerPlugin {
 		let mut sched = Schedule::new(ServerSchedule);
 		// ServerSchedule runs sub-schedules sequentially
 		sched.set_executor_kind(ExecutorKind::SingleThreaded);
-
+		
+		// sub-schedules run their systems in parallel, which is the default for `Schedule::new`,
+		// so we can let them be automatically added with `add_systems`
+		
 		srv_app
 			.add_plugins((MinimalPlugins, SimPlugin))
 			.add_schedule(sched)
-			// sub-schedules run in parallel (default for `Schedule::new`)
-			.add_schedule(Schedule::new(ServerPreSim))
-			.add_schedule(Schedule::new(ServerPostSim))
-			.add_systems(ServerSchedule, ServerSchedule::run);
+			.add_systems(ServerSchedule, ServerSchedule::run)
+			.init_state::<ServerState>();
 
 		app.insert_sub_app(ServerApp, srv_app);
 	}
@@ -61,22 +62,22 @@ pub struct ServerSchedule;
 impl ServerSchedule {
 	pub fn run(world: &mut World) {
 		let span = trace_span!("ServerSchedule::run");
+		let pre_sim = trace_span!("ServerPreSim");
+		let sim = trace_span!("SimMain");
+		let post_sim = trace_span!("ServerPostSim");
+		
 		let _enter = span.enter();
-
 		{
-			let pre_sim = trace_span!("ServerPreSim");
 			let _enter = pre_sim.enter();
-			world.run_schedule(ServerPreSim);
+			let _ = world.try_run_schedule(ServerPreSim);
 		}
 		{
-			let sim = trace_span!("SimMain");
 			let _enter = sim.enter();
-			world.run_schedule(SimMain);
+			let _ = world.try_run_schedule(SimMain);
 		}
 		{
-			let post_sim = trace_span!("ServerPostSim");
 			let _enter = post_sim.enter();
-			world.run_schedule(ServerPostSim);
+			let _ = world.try_run_schedule(ServerPostSim);
 		}
 	}
 }
@@ -88,3 +89,9 @@ pub struct ServerPreSim;
 /// Schedule that runs after the simulation schedule on the server.
 #[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct ServerPostSim;
+
+#[derive(States, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ServerState {
+	#[default]
+	NoActiveGame,
+}

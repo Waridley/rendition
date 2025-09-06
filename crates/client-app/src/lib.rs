@@ -23,13 +23,14 @@ impl Plugin for ClientPlugin {
 		// ClientSchedule runs sub-schedules sequentially
 		sched.set_executor_kind(ExecutorKind::SingleThreaded);
 		
+		// sub-schedules run their systems in parallel, which is the default for `Schedule::new`,
+		// so we can let them be automatically added with `add_systems`
+		
 		client_app
 			.add_plugins((MinimalPlugins, SimPlugin))
 			.add_schedule(sched)
-			// sub-schedules run in parallel (default for `Schedule::new`)
-			.add_schedule(Schedule::new(ClientPreSim))
-			.add_schedule(Schedule::new(ClientPostSim))
-			.add_systems(ClientSchedule, ClientSchedule::run);
+			.add_systems(ClientSchedule, ClientSchedule::run)
+			.init_state::<ClientState>();
 		
 		app.insert_sub_app(ClientApp, client_app);
 	}
@@ -67,22 +68,22 @@ pub struct ClientSchedule;
 impl ClientSchedule {
 	pub fn run(world: &mut World) {
 		let span = trace_span!("ClientSchedule::run");
-		let _enter = span.enter();
+		let pre_sim = trace_span!("ClientPreSim");
+		let sim = trace_span!("SimMain");
+		let post_sim = trace_span!("ClientPostSim");
 		
+		let _enter = span.enter();
 		{
-			let pre_sim = trace_span!("ClientPreSim");
 			let _enter = pre_sim.enter();
-			world.run_schedule(ClientPreSim);
+			let _ = world.try_run_schedule(ClientPreSim);
 		}
 		{
-			let sim = trace_span!("SimMain");
 			let _enter = sim.enter();
-			world.run_schedule(SimMain);
+			let _ = world.try_run_schedule(SimMain);
 		}
 		{
-			let post_sim = trace_span!("ClientPostSim");
 			let _enter = post_sim.enter();
-			world.run_schedule(ClientPostSim);
+			let _ = world.try_run_schedule(ClientPostSim);
 		}
 	}
 }
@@ -94,3 +95,9 @@ pub struct ClientPreSim;
 /// Schedule that runs after the simulation schedule on the client.
 #[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct ClientPostSim;
+
+#[derive(States, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ClientState {
+	#[default]
+	NoActiveGame,
+}

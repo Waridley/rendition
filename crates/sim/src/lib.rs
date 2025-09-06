@@ -30,6 +30,29 @@ pub mod prelude {
 #[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct SimMain;
 
+/// Like [`bevy::app::main_schedule::PreStartup`], but for the simulation schedule.
+///
+/// This is run before the first tick of the simulation, and is useful for setting up initial state.
+///
+/// **WARNING:** Do not modify this schedule outside of the `SimPlugin` unless you have a very good
+/// reason. See [`SimMain`] for more information.
+#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct SimPreStartup;
+
+/// Like [`bevy::app::main_schedule::Startup`], but for the simulation schedule.
+///
+/// **WARNING:** Do not modify this schedule outside of the `SimPlugin` unless you have a very good
+/// reason. See [`SimMain`] for more information.
+#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct SimStartup;
+
+/// Like [`bevy::app::main_schedule::PostStartup`], but for the simulation schedule.
+///
+/// **WARNING:** Do not modify this schedule outside of the `SimPlugin` unless you have a very good
+/// reason. See [`SimMain`] for more information.
+#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct SimPostStartup;
+
 /// Schedule that runs first in [`SimMain`]
 ///
 /// **WARNING:** Do not modify this schedule outside of the `SimPlugin` unless you have a very good
@@ -68,9 +91,45 @@ pub struct SimLast;
 impl SimMain {
 	/// Exclusive system that runs sub-schedules within the simulation schedule sequentially,
 	/// like Bevy's built-in [`Main` schedule](bevy::app::main_schedule::Main).
-	pub fn run(world: &mut World) {
+	///
+	/// This is the only system that runs in `SimMain` itself, and usually shouldn't be run directly.
+	/// The simulation should be ticked by calling `let _ = world.try_run_schedule(SimMain)`.
+	pub fn run(world: &mut World, mut ran_startup: Local<bool>) {
 		let span = trace_span!("SimMain::run");
+		
+		let startup_span = trace_span!("check ran_startup");
+		let pre_startup = trace_span!("SimPreStartup");
+		let startup = trace_span!("SimStartup");
+		let post_startup = trace_span!("SimPostStartup");
+		
+		let loop_span = trace_span!("run sim main loop");
+		let first = trace_span!("SimFirst");
+		let pre_physics = trace_span!("SimPrePhysics");
+		let physics = trace_span!("SimPhysics");
+		let post_physics = trace_span!("SimPostPhysics");
+		let last = trace_span!("SimLast");
+		
 		let _enter = span.enter();
+
+		{
+			let _enter = startup_span.enter();
+			if !*ran_startup {
+				{
+					let _enter = pre_startup.enter();
+					// Schedules that never had systems added to them don't need to be run at all.
+					let _ = world.try_run_schedule(SimPreStartup);
+				}
+				{
+					let _enter = startup.enter();
+					let _ = world.try_run_schedule(SimStartup);
+				}
+				{
+					let _enter = post_startup.enter();
+					let _ = world.try_run_schedule(SimPostStartup);
+				}
+				*ran_startup = true;
+			}
+		}
 
 		// Clone the old time so we can restore it after running the simulation
 		let old_time = world.resource::<Time>().as_generic();
@@ -86,31 +145,29 @@ impl SimMain {
 
 		// Advance physics time by the same amount, since Avian3D uses `Time<Physics>`
 		world.resource_mut::<Time<Physics>>().advance_by(dt);
-
+		
 		{
-			let first = trace_span!("SimFirst");
-			let _enter = first.enter();
-			world.run_schedule(SimFirst);
-		}
-		{
-			let pre_physics = trace_span!("SimPrePhysics");
-			let _enter = pre_physics.enter();
-			world.run_schedule(SimPrePhysics);
-		}
-		{
-			let physics = trace_span!("SimPhysics");
-			let _enter = physics.enter();
-			world.run_schedule(SimPhysics);
-		}
-		{
-			let post_physics = trace_span!("SimPostPhysics");
-			let _enter = post_physics.enter();
-			world.run_schedule(SimPostPhysics);
-		}
-		{
-			let last = trace_span!("SimLast");
-			let _enter = last.enter();
-			world.run_schedule(SimLast);
+			let _enter = loop_span.enter();
+			{
+				let _enter = first.enter();
+				let _ = world.try_run_schedule(SimFirst);
+			}
+			{
+				let _enter = pre_physics.enter();
+				let _ = world.try_run_schedule(SimPrePhysics);
+			}
+			{
+				let _enter = physics.enter();
+				let _ = world.try_run_schedule(SimPhysics);
+			}
+			{
+				let _enter = post_physics.enter();
+				let _ = world.try_run_schedule(SimPostPhysics);
+			}
+			{
+				let _enter = last.enter();
+				let _ = world.try_run_schedule(SimLast);
+			}
 		}
 
 		// Restore the old default time so other systems don't use `Time<Sim>` by accident.
@@ -133,16 +190,15 @@ pub struct SimPlugin;
 impl Plugin for SimPlugin {
 	fn build(&self, app: &mut App) {
 		let mut sim_schedule = Schedule::new(SimMain);
+		// SimSchedule runs sub-schedules sequentially
 		sim_schedule.set_executor_kind(ExecutorKind::SingleThreaded);
 		let mut phys_t = Time::<Physics>::default();
+		// Physics time is manually advanced alongside simulation time
 		phys_t.pause();
-		app.add_schedule(Schedule::new(SimMain))
-			.add_schedule(Schedule::new(SimFirst))
-			.add_schedule(Schedule::new(SimPrePhysics))
-			.add_schedule(Schedule::new(SimPhysics))
-			.add_schedule(Schedule::new(SimPostPhysics))
-			.add_schedule(Schedule::new(SimLast))
+		app.add_schedule(sim_schedule)
 			.add_systems(SimMain, SimMain::run)
+			// sub-schedules run their systems in parallel, which is the default for `Schedule::new`,
+			// so we can let them be automatically added with `add_systems`
 			.add_plugins(PhysicsPlugins::new(SimPhysics))
 			.register_type::<ClientId>()
 			.insert_resource(Gravity(Vec3::NEG_Z * 9.81))
@@ -156,7 +212,7 @@ impl Plugin for SimPlugin {
 #[reflect(Debug, PartialEq, Hash, Default)]
 pub struct Sim {
 	/// The fixed timestep to advance the simulation by.
-	dt: Duration,
+	pub dt: Duration,
 }
 
 impl Default for Sim {
@@ -173,3 +229,6 @@ pub enum ClientId {
 	Player(PlayerId),
 	Spectator(SpectatorId),
 }
+
+#[derive(Resource, Copy, Clone, Debug, PartialEq, Eq, Hash, Reflect, PartialOrd, Ord)]
+pub struct TickN(pub u64);
