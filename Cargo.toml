@@ -22,12 +22,16 @@ version = "0.16.1"
 bevy_enhanced_input = "0.17.0"
 bird_barrier = "0.1.0"
 avian3d = { version = "0.3.1", features = ["enhanced-determinism", "bevy_diagnostic"] }
+num-traits = "0.2"
+# Projectiles are projected onto planes and tested for collisions using 2D physics.
+parry2d = { version = "0.17", features = ["enhanced-determinism"] }
 
 
 [dependencies]
-client-app = { package = "rendition-client-app", path = "crates/client-app", optional = true }
-killcam-app = { package = "rendition-killcam-app", path = "crates/killcam-app", optional = true }
-server-app = { package = "rendition-server-app", path = "crates/server-app" } # Included in client for P2P games
+bevy_transform_interpolation = "0.2.0"
+client-app = { package = "rendition-client", path = "crates/client", optional = true }
+killcam-app = { package = "rendition-killcam", path = "crates/killcam", optional = true }
+server-app = { package = "rendition-server", path = "crates/server" } # Included in client for P2P games
 sim = { package = "rendition-sim", path = "crates/sim" }
 
 bevy.workspace = true

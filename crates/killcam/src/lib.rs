@@ -1,7 +1,7 @@
-use bevy::app::AppLabel;
+use bevy::app::{AppLabel, MainSchedulePlugin, ScheduleRunnerPlugin};
 use bevy::ecs::event::EventRegistry;
 use bevy::prelude::*;
-
+use bevy::state::app::StatesPlugin;
 use sim::SimPlugin;
 
 /// Label for the killcam SubApp.
@@ -27,11 +27,11 @@ impl Plugin for KillcamPlugin {
 		// Sub-apps have their own events. Shared events must be manually synchronized.
 		kc_app.init_resource::<EventRegistry>();
 
-		kc_app.add_plugins((MinimalPlugins, SimPlugin));
+		kc_app.add_plugins((MainSchedulePlugin, StatesPlugin, SimPlugin));
 
 		app.insert_sub_app(KillcamApp, kc_app);
 	}
-	
+
 	fn cleanup(&self, app: &mut App) {
 		info!("inserting KillcamWorld");
 		let killcam_world = std::mem::take(app.sub_app_mut(KillcamApp).world_mut());

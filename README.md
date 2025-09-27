@@ -59,7 +59,7 @@ the game.
 
 #### Client
 
-The [client app](crates/client-app) is responsible for reading player input, predicting
+The [client app](crates/client) is responsible for reading player input, predicting
 the simulation, sending inputs to the server, receiving confirmed state from the
 server, rolling back to that state, and re-running the simulation multiple times
 to re-predict the current state.
@@ -72,7 +72,7 @@ dedicated servers.
 
 #### Server
 
-The [server app](crates/server-app/src/lib.rs) is responsible for managing the
+The [server app](crates/server/src/lib.rs) is responsible for managing the
 source-of-truth game state and syncing it to clients. It receives input actions
 from the network apps for all players, and simulates the world forward. It then
 sends the resulting state to all clients for them to synchronize to.
@@ -114,7 +114,7 @@ by Timothy Ford.
 Clients also maintain a previous state of the world for replaying kills from
 the perspective of the shooter. When the killcam is active, the client world is
 still running, but is not synchronized with the main world, and the [killcam
-world](crates/killcam-app) is synchronized instead. The killcam world does not
+world](crates/killcam) is synchronized instead. The killcam world does not
 accept game input, only necessary global actions like "skip killcam", "open
 pause menu", etc.
 

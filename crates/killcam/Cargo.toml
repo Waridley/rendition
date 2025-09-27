@@ -1,5 +1,5 @@
 [package]
-name = "rendition-killcam-app"
+name = "rendition-killcam"
 description = "Manages the killcam world for Rendition. Basically a rolling snapshot of the client world."
 version = "0.1.0"
 edition = "2024"
@@ -9,5 +9,6 @@ homepage = "https://github.com/Waridley/rendition"
 authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
+rendition-common = { path = "../common" }
 sim = { package = "rendition-sim", path = "../sim" }
 bevy.workspace = true

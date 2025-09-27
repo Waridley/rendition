@@ -3465,6 +3465,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "parry2d"
+version = "0.17.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87edd53b1639e011e4765eecfceb0fa2c486da696dcdcfbc9a38bfc3574fb7e0"
+dependencies = [
+ "approx",
+ "arrayvec",
+ "bitflags 2.9.3",
+ "downcast-rs 1.2.1",
+ "either",
+ "ena",
+ "indexmap",
+ "log",
+ "nalgebra",
+ "num-derive",
+ "num-traits",
+ "ordered-float",
+ "rustc-hash 2.1.1",
+ "simba",
+ "slab",
+ "smallvec",
+ "spade",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "parry3d"
 version = "0.17.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3903,18 +3929,20 @@ name = "rendition"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_transform_interpolation",
  "bird_barrier",
- "rendition-client-app",
- "rendition-killcam-app",
- "rendition-server-app",
+ "rendition-client",
+ "rendition-killcam",
+ "rendition-server",
  "rendition-sim",
 ]
 
 [[package]]
-name = "rendition-client-app"
+name = "rendition-client"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "rendition-common",
  "rendition-sim",
 ]
 
@@ -3922,19 +3950,23 @@ dependencies = [
 name = "rendition-common"
 version = "0.1.0"
 dependencies = [
+ "avian3d",
  "bevy",
+ "num-traits",
+ "parry2d",
 ]
 
 [[package]]
-name = "rendition-killcam-app"
+name = "rendition-killcam"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "rendition-common",
  "rendition-sim",
 ]
 
 [[package]]
-name = "rendition-server-app"
+name = "rendition-server"
 version = "0.1.0"
 dependencies = [
  "bevy",
@@ -3947,6 +3979,7 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
+ "rendition-common",
 ]
 
 [[package]]

@@ -1,7 +1,9 @@
+use bevy::app::{MainSchedulePlugin, ScheduleRunnerPlugin};
 use bevy::ecs::event::EventRegistry;
 use bevy::ecs::schedule::{ExecutorKind, ScheduleLabel};
+use bevy::state::app::StatesPlugin;
 use bevy::{app::AppLabel, prelude::*};
-use sim::{SimMain, SimPlugin};
+use sim::SimPlugin;
 
 /// Sets up the game client, which reads player input, predicts the simulation,
 /// sends inputs to the `NetApp` to forward to the server, receives confirmed
@@ -12,29 +14,20 @@ pub struct ClientPlugin;
 impl Plugin for ClientPlugin {
 	fn build(&self, app: &mut App) {
 		let mut client_app = SubApp::new();
-		
+
 		// AppTypeRegistry is initialized in `App::default`. We want to share it with sub-apps.
 		let reg = app.world().resource::<AppTypeRegistry>().clone();
 		client_app.insert_resource(reg);
 		// Sub-apps have their own events. Shared events must be manually synchronized.
 		client_app.init_resource::<EventRegistry>();
-		
-		let mut sched = Schedule::new(ClientSchedule);
-		// ClientSchedule runs sub-schedules sequentially
-		sched.set_executor_kind(ExecutorKind::SingleThreaded);
-		
-		// sub-schedules run their systems in parallel, which is the default for `Schedule::new`,
-		// so we can let them be automatically added with `add_systems`
-		
+
 		client_app
-			.add_plugins((MinimalPlugins, SimPlugin))
-			.add_schedule(sched)
-			.add_systems(ClientSchedule, ClientSchedule::run)
+			.add_plugins((MainSchedulePlugin, StatesPlugin, SimPlugin))
 			.init_state::<ClientState>();
-		
+
 		app.insert_sub_app(ClientApp, client_app);
 	}
-	
+
 	fn cleanup(&self, app: &mut App) {
 		info!("inserting ClientWorld");
 		let client_world = std::mem::take(app.sub_app_mut(ClientApp).world_mut());
@@ -58,43 +51,6 @@ pub struct ClientWorld(pub World);
 /// case the killcam app's world is rendered instead.
 #[derive(AppLabel, Default, Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ClientApp;
-
-/// Schedule for the client app. Only runs on clients.
-///
-/// Runs [`ClientPreSim`], [`SimMain`], then [`ClientPostSim`].
-#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct ClientSchedule;
-
-impl ClientSchedule {
-	pub fn run(world: &mut World) {
-		let span = trace_span!("ClientSchedule::run");
-		let pre_sim = trace_span!("ClientPreSim");
-		let sim = trace_span!("SimMain");
-		let post_sim = trace_span!("ClientPostSim");
-		
-		let _enter = span.enter();
-		{
-			let _enter = pre_sim.enter();
-			let _ = world.try_run_schedule(ClientPreSim);
-		}
-		{
-			let _enter = sim.enter();
-			let _ = world.try_run_schedule(SimMain);
-		}
-		{
-			let _enter = post_sim.enter();
-			let _ = world.try_run_schedule(ClientPostSim);
-		}
-	}
-}
-
-/// Schedule that runs before the simulation schedule on the client.
-#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct ClientPreSim;
-
-/// Schedule that runs after the simulation schedule on the client.
-#[derive(ScheduleLabel, Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct ClientPostSim;
 
 #[derive(States, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ClientState {

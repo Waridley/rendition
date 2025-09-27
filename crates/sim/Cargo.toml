@@ -9,5 +9,6 @@ homepage = "https://github.com/Waridley/rendition"
 authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
+rendition-common = { path = "../common" }
 bevy.workspace = true
 avian3d.workspace = true

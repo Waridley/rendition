@@ -1,6 +1,6 @@
+use bevy::prelude::*;
 use sim::ClientId;
 use sim::players::PlayerId;
-use bevy::prelude::*;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 const DEFAULT_SERVER_PORT: u16 = 6464;

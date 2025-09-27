@@ -1,6 +1,5 @@
 [package]
-name = "rendition-server-app"
-description = "Rendition Server App. Included in client for P2P games, and run standalone for dedicated servers."
+name = "rendition-client"
 version = "0.1.0"
 edition = "2024"
 license = "EUPL-1.2"
@@ -9,6 +8,6 @@ homepage = "https://github.com/Waridley/rendition"
 authors = ["Waridley <Waridley64@gmail.com>"]
 
 [dependencies]
-sim = { package = "rendition-sim", path = "../sim" }
-
+rendition-common = { path = "../common" }
 bevy.workspace = true
+sim = { package = "rendition-sim", path = "../sim" }
