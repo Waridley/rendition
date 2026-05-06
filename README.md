@@ -25,11 +25,11 @@ laid out to guide future development.
 ## Architecture
 
 All Rendition networking code is written in-house on top of pure UDP. While this
-may be considered "not-invented-here" syndrome, my personal opinion is that
+may be viewed as "not-invented-here" syndrome, my personal opinion is that
 netcode should always be finely tuned to perform as efficiently as possible for
 each specific game. This maximizes the accessibility of the game to players with
-different internet connections, minimizes throughput costs, and ensures the
-highest level of security and cheat resistance.
+different internet connections, minimizes throughput costs, and aids in improving
+security and cheat resistance.
 
 ### Client-server architecture
 
@@ -66,7 +66,7 @@ to re-predict the current state.
 
 It is not exactly what is typically called the "game client" for other games,
 which would be the program that only runs on the player's machine and actually
-creates a window and renders to it. For rendition, that is the job of the [main
+creates a window and renders to it. For Rendition, that is the job of the [main
 app](src/main.rs), but the main app can also be running in headless mode for
 dedicated servers.
 
@@ -75,10 +75,12 @@ dedicated servers.
 The [server app](crates/server/src/lib.rs) is responsible for managing the
 source-of-truth game state and syncing it to clients. It receives input actions
 from the network apps for all players, and simulates the world forward. It then
-sends the resulting state to all clients for them to synchronize to.
+sends the resulting state to all clients for them to synchronize to. It retains
+a history of entity positions it can rewind to in order to perform favor-the-
+shooter evaluations.
 
 The server app may run on a "host" client, or on a dedicated server. I have some
-ideas for how to reduce issues with client-hosted servers, but dedicated server
+ideas for how to reduce issues with client-hosted servers[^1], but dedicated server
 support is the priority.
 
 #### Synchronization
@@ -99,8 +101,11 @@ by Timothy Ford.
 - Unexpected drops in network quality are compensated for by speeding up the
   client simulation rate (without changing the fixed delta time used in the
   simulation), thus increasing the input buffer size on the server.
-- A rolling window of input states is sent by the client with each packet to
-  reduce the risk that the server completely misses a frame of input.
+- When the client's connection stabilizes, the simulation can be slightly
+  slowed down to reduce the buffer size.
+- A rolling window of input states not yet confirmed by the srver is sent by
+  the client with each packet to reduce the risk that the server completely
+  misses a frame of input.
 - Since the game favors the shooter rather than the victim in most cases,
   any combat actions received by the server will be evaluated to see if it's
   even possible that they affected another entity (via bounding box intersection
@@ -132,8 +137,10 @@ server. It also handles interpolating visual positions between simulated states
 to smooth motion on high refresh rate screens, and to blend misprediction
 corrections. 
 
-When running the server app, the main app also holds the buffers of inputs from
-clients. 
+When running the server app, the main app also holds the buffers of input states
+from clients which it feeds to the server. It runs the server app at the fixed
+delta rate in real time. It then receives positions and other information from
+the server after each tick, and forwards them to the clients over the network.
 
 ### Miscellaneous
 
@@ -141,8 +148,12 @@ The game uses a right-handed Z-up coordinate system. This requires some
 annoying minor accommodations for Bevy's default Y-up coordinate system,
 but I find it much easier to reason about and more consistent with Blender.
 
-Multiple client-hosted servers might exist for one match as redundancy for the
+The server may decide to only send positions of players that could possibly
+be seen or affected by each player to said player, to mitigate wall-hack exploits.
+The challenge will be sending enough information to avoid perceived glitchiness
+or invisible/teleporting players.
+
+[^1]: Multiple client-hosted servers might exist for one match as redundancy for the
 host disconnecting, as well as to help catch players manipulating the server
 behavior. A server might even be run by a player who is not in the match, so
 they have no vested interest in the outcome.
-
